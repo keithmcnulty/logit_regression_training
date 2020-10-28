@@ -30,7 +30,7 @@ The dataset used can be found [on my Github](https://github.com/keithmcnulty/spe
 
 ## Note on languages
 
-This document is coded in R.  I've written a Python notebook [here]() with the code to do the same operations that you find in this document.
+This document is coded in R.  I've written a Python notebook [here](https://github.com/keithmcnulty/logit_regression_training/blob/main/logit_regression_training.ipynb) with the code to do many of the same operations that you find in this document.
 
 
 ---

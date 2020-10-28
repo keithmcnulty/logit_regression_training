@@ -22,7 +22,7 @@ class: left, middle, r-logo
 
 ## Key Sources
 
-* [*An Introduction to Statistical Learning*](https://faculty.marshall.usc.edu/gareth-james/ISL/ISLR%20Seventh%20Printing.pdf)* by James, Witten, Hastie and Tibshirani.
+* [*An Introduction to Statistical Learning*](https://faculty.marshall.usc.edu/gareth-james/ISL/ISLR%20Seventh%20Printing.pdf) by James, Witten, Hastie and Tibshirani.
 
 * *Applied Logistic Regression* by David W. Hosmer Jr., Stanley Lemeshow, Rodney X. Sturdivant
 
@@ -30,7 +30,7 @@ The dataset used can be found [on my Github](https://github.com/keithmcnulty/spe
 
 ## Note on languages
 
-This document is coded in R.  I've written a Python notebook [here]() with the code to do the same operations that you find in this document.
+This document is coded in R.  I've written a Python notebook [here](https://github.com/keithmcnulty/logit_regression_training/blob/main/logit_regression_training.ipynb) with the code to do many of the same operations that you find in this document.
 
 
 ---
@@ -38,14 +38,14 @@ class: left, middle, r-logo
 
 ## Recap from last session
 
-We are trying to understand a relationship between an outcome variable `\(y\)` and a  an set of input variables `\(X = x_1, x_2, ..., x_p\)` of the form 
+When we model, we are trying to understand a relationship between an outcome variable `\(y\)` and a set of input variables `\(X = x_1, x_2, ..., x_p\)` of the form 
 
-`$$Y = f(X) + \epsilon$$`
+`$$y = f(X) + \epsilon$$`
 where `\(\epsilon\)` is some uncontrollable error in each observation, which has a mean of zero over the population.
 
 A *parametric model* explicitly forces a certain function type `\(f(X)\)`. 
 
-In our last session we looked at a *continuous outcome* using a *linear model*:
+In our last session we looked at modeling a *continuous outcome* using a *linear model*:
 
 $$
 f(X) = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p
@@ -66,6 +66,19 @@ where `\(L\)` is the limit of the population (known as the 'carrying capacity'),
 
 &lt;img src="index_files/figure-html/unnamed-chunk-1-1.png" style="display: block; margin: auto;" /&gt;
 
+---
+
+## Binary outcomes are everywhere
+
+Binary outcomes are some of the most pervasive outcomes in science and in practice.  For example:
+
+* **Medicine:**  Disease vs No Disease, Survived vs Did Not Survive
+* **Sports:**  Win vs No Win
+* **IO Psychology:**  Satisfied vs Not Satisfied, Retained vs Not Retained, High Performer vs Not
+* **Finance:**  Fraud vs No Fraud, Default vs No Default
+* **Marketing**:  Click vs No Click, Purchase vs No Purchase
+
+In many cases, other outcome scales are converted to binary by using a cutoff:  for example, in surveys, a 'high' response may consist of several high ratings on the Likert scale.
 
 ---
 class: left, middle, r-logo
@@ -149,8 +162,7 @@ url &lt;- "https://raw.githubusercontent.com/keithmcnulty/speed_dating/master/sp
 speed_dating &lt;- read.csv(url)
 
 # select only some elements for this training
-speed_dating &lt;- speed_dating[ ,c("gender", "goal", "dec", "attr", "intel", "prob")] %&gt;% 
-  dplyr::mutate(across(where(is.numeric), as.integer))
+speed_dating &lt;- speed_dating[ ,c("gender", "goal", "dec", "attr", "intel", "prob")] 
 head(speed_dating)
 ```
 
@@ -189,22 +201,23 @@ class: left, middle, r-logo
 
 ```r
 # run a binomial general linear model on the male individuals
-model_m &lt;- glm(dec ~ attr + intel + prob, data = speed_dating[speed_dating$gender == 1, ],
-             family = "binomial")
+model_m &lt;- glm(dec ~ attr + intel + prob, 
+               data = speed_dating[speed_dating$gender == 1, ],
+               family = "binomial")
 
 # view a summary of the coefficients of the model
 (coefficients_m &lt;- summary(model_m)$coefficients %&gt;% as.data.frame())
 ```
 
 ```
-##                Estimate Std. Error    z value      Pr(&gt;|z|)
-## (Intercept) -6.26013687 0.26362374 -23.746484 1.194596e-124
-## attr         0.76579561 0.02989993  25.611951 1.122860e-144
-## intel       -0.06826831 0.03019698  -2.260767  2.377371e-02
-## prob         0.32775920 0.02114556  15.500141  3.461290e-54
+##               Estimate Std. Error    z value      Pr(&gt;|z|)
+## (Intercept) -6.2537585 0.26346670 -23.736428 1.517359e-124
+## attr         0.7658699 0.02990211  25.612572 1.105090e-144
+## intel       -0.0688468 0.03020599  -2.279243  2.265262e-02
+## prob         0.3269378 0.02112880  15.473558  5.233269e-54
 ```
 
-Recalling the meaning of `(P &gt; |z|)` - the p-value - we can determine that all three rating play a significant role in the decision outcome of a date where the individual is male.
+Recalling the meaning of `(P &gt; |z|)` - the p-value - we can determine that all three ratings play a significant role in the decision outcome of a date.
 
 ---
 
@@ -212,7 +225,7 @@ class: left, middle, r-logo
 
 ## Interpreting the coefficients  
 
-Our coefficients indicate the linear impact on the log odds of a positive decision.  This means that a negative coefficient decreases the log odds and a positive coefficient increases the log odds.  In this context we can see that physical attractiveness and sense of reciprocation both have a positive effect on likelihood of a positive decision when the individual is male, but intelligence has a negative impact&lt;sup&gt;1&lt;/sup&gt;.  
+Our coefficients indicate the linear impact on the log odds of a positive decision.  A negative coefficient decreases the log odds and a positive coefficient increases the log odds.  In this context we can see that physical attractiveness and sense of reciprocation both have a positive effect on likelihood of a positive decision when the decision maker is male, but intelligence has a negative impact.  
 
 We can easily extend the manipulations from a few slides back to get a formula for the odds of an event in terms of the coefficents `\(\beta_0, \beta_1, ..., \beta_p\)`:
 
@@ -223,11 +236,9 @@ $$
 \end{align*}`
 $$
 
-* `\(e^{\beta_0}\)` is the odds of the event assuming zero from all input variables (the odds of someone perceived as very ugly, very dumb and very disengaged being viewed positively)
-* `\(e^{\beta_i}\)` is the multiplier of the odds associated with a one unit increase in `\(x_i\)` (for example, an extra point rating in physical attractiveness), assuming all else equal - because of the mutiplicative effect, we call this the *odds ratio*
+* `\(e^{\beta_0}\)` is the odds of the event assuming zero from all input variables 
+* `\(e^{\beta_i}\)` is the multiplier of the odds associated with a one unit increase in `\(x_i\)` (for example, an extra point rating in physical attractiveness), assuming all else equal - because of the multiplicative effect, we call this the *odds ratio*
 
-
-&lt;font size=1&gt;[1] I'd like to say I am surprised, but I'm not. &lt;/font&gt;
 ---
 
 class: left, middle, r-logo
@@ -244,18 +255,18 @@ coefficients_m
 ```
 
 ```
-##                Estimate Std. Error    z value      Pr(&gt;|z|)  odds_ratio
-## (Intercept) -6.26013687 0.26362374 -23.746484 1.194596e-124 0.001910984
-## attr         0.76579561 0.02989993  25.611951 1.122860e-144 2.150704824
-## intel       -0.06826831 0.03019698  -2.260767  2.377371e-02 0.934009832
-## prob         0.32775920 0.02114556  15.500141  3.461290e-54 1.387854732
+##               Estimate Std. Error    z value      Pr(&gt;|z|)  odds_ratio
+## (Intercept) -6.2537585 0.26346670 -23.736428 1.517359e-124 0.001923212
+## attr         0.7658699 0.02990211  25.612572 1.105090e-144 2.150864692
+## intel       -0.0688468 0.03020599  -2.279243  2.265262e-02 0.933469675
+## prob         0.3269378 0.02112880  15.473558  5.233269e-54 1.386715208
 ```
 
 We interpret our each of our odds ratios as follows (assuming all else equal):
 
 * An extra point in physical attractiveness increases the odds by 115%
 * An extra point in intelligence *decreases* the odds by 7%
-* An extra point in perceived reciprocation of interest increases the odds by 32%
+* An extra point in perceived reciprocation of interest increases the odds by 39%
 
 
 If you are concerned about the precision of these statements, you can also get the 95% confidence intervals for the odds ratios by using `exp(confint(model_m))`
@@ -268,7 +279,7 @@ class: left, middle, r-logo
 
 ## Warning:  odds &amp;#x2260; probabability
 
-Increase in odds have a diminishing effect on probability as the original probability increases.  So it is important to know the difference between the two.  Here is a graph showing the impact of a 10% increase in odds on the probability of an event, depending on the original probability.
+Increases in odds have a diminishing effect on probability as the original probability increases.  So it is important to know the difference between the two.  Here is a graph showing the impact of a 10% increase in odds on the probability of an event, depending on the original probability.
 
 &lt;img src="index_files/figure-html/unnamed-chunk-7-1.png" style="display: block; margin: auto;" /&gt;
 
@@ -281,8 +292,9 @@ class: left, middle, r-logo
 
 ```r
 # run a binomial general linear model on the females
-model_f &lt;- glm(dec ~ attr + intel + prob, data = speed_dating[speed_dating$gender == 0, ],
-             family = "binomial")
+model_f &lt;- glm(dec ~ attr + intel + prob, 
+               data = speed_dating[speed_dating$gender == 0, ],
+               family = "binomial")
 
 # view a summary of the coefficients of the model, incl odds_ratios
 coefficients_f &lt;- summary(model_f)$coefficients %&gt;% as.data.frame()
@@ -292,19 +304,13 @@ coefficients_f
 
 ```
 ##                Estimate Std. Error    z value      Pr(&gt;|z|)  odds_ratio
-## (Intercept) -5.84620660 0.25253399 -23.150177 1.447797e-118 0.002890845
-## attr         0.55171639 0.02507124  22.005951 2.525658e-107 1.736230506
-## intel        0.08755352 0.02880294   3.039743  2.367804e-03 1.091500684
-## prob         0.23108983 0.01979040  11.676862  1.673600e-31 1.259972420
+## (Intercept) -5.84737044 0.25260132 -23.148614 1.501241e-118 0.002887482
+## attr         0.55142831 0.02506430  22.000546 2.845351e-107 1.735730416
+## intel        0.08757465 0.02880993   3.039738  2.367839e-03 1.091523740
+## prob         0.23149158 0.01979541  11.694207  1.364556e-31 1.260478710
 ```
 
-Again, we see that all three ratings are significant, but we see different dynamics:
-
-* An extra point in physical attractiveness increases odds by 74%
-* An extra point in intelligence increases odds by 9%
-* an extra point in perceived reciprocation of interest increases odds by 26%
-
-We see attractiveness and intelligence both playing a positive role, and a lower effect of physical attractiveness when the decision maker is female.
+Try interpreting these yourself.
 
 ---
 
@@ -326,8 +332,8 @@ predict(model_m, new_dates, type = "response")
 ```
 
 ```
-##         1         2         3 
-## 0.0181266 0.3989319 0.9541616
+##          1          2          3 
+## 0.01814777 0.39861688 0.95394355
 ```
 
 In classification learning, the data is split into a training and test set, the model is fitted using a training set, a probability 'cutoff' is used to determine positive or negative classes (usually 0.5), and then the predictive accuracy is determined by testing on the test set.
@@ -338,19 +344,20 @@ class: left, middle, r-logo
 
 ## Assessing the fit of a binomial logistic regression model
 
-Previously we looked at the fit of a linear regression model and determined a metric called `\(R^2\)`, which determined how much of the variance of `\(y\)` was explained by our model.  This is not so straightforward in binomial logistic regression, and in fcat still the subject of research.  
+Previously we looked at the fit of a linear regression model and determined a metric called `\(R^2\)`, which determined how much of the variance of `\(y\)` was explained by our model.  This is not so straightforward in binomial logistic regression, and in fact still the subject of intense research.  
 
-Numerous variants of measures called *pseudo-$R^2$* exist to try to approximate something similar to an `\(R^2\)`.  The `DescTools` package provides easy access to these measures.  All have positive and negatives and should be handled carefully. Here are four of them.
+Numerous variants of measures called *pseudo*- `\(R^2\)` exist to try to approximate something similar to an `\(R^2\)`.  The `DescTools` package provides easy access to these measures.  All have different definitions and should be handled carefully. Here are four of them.
 
 
 ```r
 library(DescTools)
-DescTools::PseudoR2(model_m, which = c("McFadden", "CoxSnell", "Nagelkerke", "Tjur"))
+DescTools::PseudoR2(model_m, 
+                    which = c("McFadden", "CoxSnell", "Nagelkerke", "Tjur"))
 ```
 
 ```
 ##   McFadden   CoxSnell Nagelkerke       Tjur 
-##  0.2742302  0.3161303  0.4215972  0.3341089
+##  0.2742679  0.3161661  0.4216450  0.3342360
 ```
 
 The *Aikake Information Criterion*  is also valuable in directly comparing two competing models, with a lower AIC suggestion less information loss from the model.
@@ -361,7 +368,7 @@ AIC(model_m)
 ```
 
 ```
-## [1] 4019.599
+## [1] 4019.39
 ```
 
 ---
@@ -370,10 +377,10 @@ class: left, middle, r-logo
 
 ## Assessing model confidence/goodness-of-fit
 
-In linear regression we were able to compare our model to a completely random alternative and show with some level of certainty whether our model did a 'better than random' job.  This, again, is not straightforward with logistic regression.  Options includeL
+In linear regression we were able to compare our model to a completely random alternative and show with some level of certainty whether our model did a 'better than random' job.  This, again, is not straightforward with logistic regression.  Options include:
 
-* 'Goodness of fit' tests for inference involving breaking predictions into groups and comparing the observed prediction in each group with the modeled predictions in each group, and performing a chi-square test to determine if they are significantly different.  In these tests the null hypothesis is that there is a good fit, therefore (unlike linear regression) a low p-value is a sign of a poorly chosen model.  There are a number of different goodness of fit tests available in the `LogisticDx` package, including the Hosmer-Lemeshow test.
-* Typical measures of predictive accuracy can be used if the model is being trained in a predictive context to classify test data, such as precision, recall and ROC-AUC.
+* 'Goodness of fit' tests for inference involving breaking observations into groups and comparing the observed outcomes in each group with the fitted outcomes in each group, performing a chi-square test to determine if they are significantly different.  In these tests the null hypothesis is that there is a good fit, therefore (unlike linear regression) a low p-value is a sign of a poorly chosen model.  There are a number of different goodness of fit tests available in the `LogisticDx` package, including the Hosmer-Lemeshow test.
+* Typical measures of predictive accuracy can be used if the model is being trained in a predictive context to classify test data, such as precision, recall and ROC-AUC, compared to a random classifier.
 
 ---
 
@@ -397,7 +404,9 @@ class: center, middle, r-logo
 
 # Thank you! Questions?
 
-## Next time: Multinomial Logistic Regression for outcomes that are categorical and without order
+## Next time: \
+Proportional Odds Logistic Regression for outcomes that are an ordered categorical scale. \
+We'll see how they proved what caused the Space Shuttle Challenger Disaster
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

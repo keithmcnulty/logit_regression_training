@@ -373,12 +373,18 @@ In linear regression we were able to compare our model to a completely random al
 
 class: left, middle, r-logo
 
-## 'Take-home' exercise 1
+## 'Take-home' exercise 1 - Space Shuttle Challenger disaster
 
+1.  Download the `orings` dataset from [here](https://raw.githubusercontent.com/keithmcnulty/logit_regression_training/main/orings.csv).  
+2.  The dataset shows the air temperature at launch and the number of incidents of o-ring damage on each shuttle launch prior to the Challenger launch.
+3.  Create an appropriate binary variable to apply binomial logistic regression.
+4.  Prove that air temperature at launch had a significant effect on the probability of o-ring damage.
 
-## 'Take-home' exercise 2
+---
 
+class: left, middle, r-logo
 
+## 'Take-home' exercise 2 - speed dating
 
 Here is the coding for `goal` in the `speed_dating` dataset:
 
@@ -389,14 +395,14 @@ Here is the coding for `goal` in the `speed_dating` dataset:
 * To say I did it = 5
 * Other = 6
 
-Filter the data into separate sets according to `goal` - or combine sets if you think the goals are similar.  For each of your set, run a binomial logistic regression model and determine if there are any notable differences between the groups.  Feel free to share your findings!
+1. Filter the data into separate sets according to `goal` - or combine sets if you think the goals are similar.  
+2. For each of your sets, run a binomial logistic regression model and determine if there are any notable differences between the groups.  Feel free to share your findings!
 
 ---
 class: center, middle, r-logo
 
 # Thank you! Questions?
 
-## Next time:
-Multinomial Logistic Regression for outcomes that are discreet categories. 
+## Next time: Multinomial Logistic Regression for outcomes that are discreet categories 
 
 

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Introduction to Binomial Logistic Regression for Inference on Binary Outcomes</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Keith McNulty" />
+    <link rel="stylesheet" href="mckpam.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Introduction to Binomial Logistic Regression for Inference on Binary Outcomes
+### Keith McNulty
+
+---
+
+
+
+
+class: left, middle, r-logo
+
+## Key Sources
+
+* [*An Introduction to Statistical Learning*](https://faculty.marshall.usc.edu/gareth-james/ISL/ISLR%20Seventh%20Printing.pdf)* by James, Witten, Hastie and Tibshirani.
+
+* *Applied Logistic Regression* by David W. Hosmer Jr., Stanley Lemeshow, Rodney X. Sturdivant
+
+The dataset used can be found [on my Github](https://github.com/keithmcnulty/speed_dating/blob/master/speed_data_data.csv).
+
+## Note on languages
+
+This document is coded in R.  I've written a Python notebook [here]() with the code to do the same operations that you find in this document.
+
+
+---
+class: left, middle, r-logo
+
+## Recap from last session
+
+We are trying to understand a relationship between an outcome variable `\(y\)` and a  an set of input variables `\(X = x_1, x_2, ..., x_p\)` of the form 
+
+`$$Y = f(X) + \epsilon$$`
+where `\(\epsilon\)` is some uncontrollable error in each observation, which has a mean of zero over the population.
+
+A *parametric model* explicitly forces a certain function type `\(f(X)\)`. 
+
+In our last session we looked at a *continuous outcome* using a *linear model*:
+
+$$
+f(X) = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_px_p
+$$
+where `\(\beta_0\)` is the intercept (the 'starting value') and `\(\beta_i\)` is the effect of a single unit change in `\(x_i\)` assuming all else equal.
+
+---
+class: left, middle, r-logo
+
+## Context:  the logistic function
+
+In the early 1800s, the Belgian mathematician Pierre François Verhulst proposed a function for modeling population growth, as follows:
+
+$$
+f(x) = \frac{L}{1 + e^{-k(x - x_0)}}
+$$
+where `\(L\)` is the limit of the population (known as the 'carrying capacity'), `\(k\)` is the steepness of the curve and `\(x_0\)` is the midpoint of `\(x\)` (in population terms the midpoint of time).  With `\(k = 1\)` and `\(x_0\)` = 0 this looks like:
+
+&lt;img src="index_files/figure-html/unnamed-chunk-1-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+class: left, middle, r-logo
+
+## Modeling binary outcomes
+
+Imagine we are studying an outcome event `\(y\)` which can either occur or not occur.  We label `\(y = 1\)` if it does occur for a given observation, and `\(y = 0\)` otherwise.  `\(y\)` is called a *binary* or *dichotomous* outcome.
+
+Now imagine we want to relate `\(y\)` to a set of input variables `\(X\)`.   In order to study this using some method similar to our linear model, we need a sensible scale for `\(y\)`, knowing that it cannot be less than zero or greater than 1.
+
+One natural way forward is to consider the *probability* of y occurring:  `\(P(y = 1)\)` 
+
+---
+class: left, middle, r-logo
+
+## Probability distribution for random variables
+
+Let's assume we have a single input variable `\(x\)` and we assume that `\(y\)` is more likely to occur as `\(x\)` increases.  We sample the data for increasing values of `\(x\)` and calculate mean probability that `\(y = 1\)`.  Over large enough samples, we expect to see something like a normal probability distribution.   
+
+&lt;img src="index_files/figure-html/unnamed-chunk-2-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+class: left, middle, r-logo
+
+## Similarity with logistic distribution
+
+Notice the similar S (sigmoid) shape of the normal and logistic distributions.  This means we could take our logistic function with a carrying capacity of 1 (maximum probability) as an approximation of a normal distribution.  This turns out to have benefits in interpretation.
+
+&lt;img src="index_files/figure-html/unnamed-chunk-3-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+class: left, middle, r-logo
+
+## What happens if we use a logistic function?
+
+$$
+P(y = 1) = \frac{1}{1 + e^{-k(x - x_0)}} = \frac{1}{1 + e^{-(\beta_0 + \beta_1x_1)}}
+$$
+where `\(\beta_0 = -kx_0\)` and `\(\beta_1 = k\)`.
+
+Meanwhile
+
+$$
+P(y = 0) =  1 - P(y = 1) = \frac{e^{-(\beta_0 + \beta_1x)}}{1 + e^{-(\beta_0 + \beta_1x)}}
+$$
+So, if we divide the two:
+
+$$
+\frac{P(y = 1)}{P(y = 0)} = \frac{1}{e^{-(\beta_0 + \beta_1x)}} = e^{\beta_0 + \beta_1x}
+$$
+
+---
+
+class: left, middle, r-logo
+
+## The odds of y
+
+You may know (from horse racing for example), that for a dichotomous outcome `\(y\)`, `\(\frac{P(y = 1)}{P(y = 0)}\)` is called the *odds* of y.  Now, if we take natural logarithms of our last equation, we get:
+
+$$
+\mathrm{ln}\left(\frac{P(y = 1)}{P(y = 0)}\right) = \beta_0 + \beta_1x
+$$
+So we have a linear model in the *log odds* of `\(y\)`.
+
+Since a *transformation* of our outcome is linear on our input variable, we can create a model known as a *generalized linear model* which will model the log odds of our outcome event `\(y\)`.  As we will see, the coefficients of a model like this can be interpreted very intuitively to explain the impact of input variables on the likelihood of `\(y\)` occurring.
+
+---
+
+class: left, middle, r-logo
+
+## The speed dating dataset
+
+This dataset is from an experiment run by Columbia University students in New York, where they collected information from speed dating sessions where individuals met partners of the opposite sex.  
+
+
+```r
+# get data
+url &lt;- "https://raw.githubusercontent.com/keithmcnulty/speed_dating/master/speed_data_data.csv"
+speed_dating &lt;- read.csv(url)
+
+# select only some elements for this training
+speed_dating &lt;- speed_dating[ ,c("gender", "goal", "dec", "attr", "intel", "prob")] %&gt;% 
+  dplyr::mutate(across(where(is.numeric), as.integer))
+head(speed_dating)
+```
+
+```
+##   gender goal dec attr intel prob
+## 1      0    2   1    6     7    6
+## 2      0    2   1    7     7    5
+## 3      0    2   1    5     9   NA
+## 4      0    2   1    7     8    6
+## 5      0    2   1    5     7    6
+## 6      0    2   0    4     7    5
+```
+
+---
+
+class: left, middle, r-logo
+
+## Data fields for `speed_dating`
+
+The individuals were given a series of surveys to complete as part of the experiment.
+* `dec` is the decision on whether the individual wanted to meet that specific partner again after the speed date and is our outcome for this example.  
+* `attr`, `intel`, and `prob` are ratings out of ten on physical attractiveness, intelligence and the individual's belief that the partner also liked them. 
+* `gender` is the gender of the individual: female is 0 and male is 1
+* `goal` is a categorical variable with a code for different goals of the individual in attending (eg 'seemed like a fun night out', or 'looking for a serious relationship').
+
+In this example we are going to look purely at the speed date level and not consider the fact that several speed dates may involve the same individual.  We will add in that element in a future session when we look at *mixed models*.
+
+We are aiming to model the decision `dec` against the ratings `attr`, `intel` and `prob`.
+
+---
+
+class: left, middle, r-logo
+
+## Running the model on men only
+
+
+```r
+# run a binomial general linear model on the male individuals
+model_m &lt;- glm(dec ~ attr + intel + prob, data = speed_dating[speed_dating$gender == 1, ],
+             family = "binomial")
+
+# view a summary of the coefficients of the model
+(coefficients_m &lt;- summary(model_m)$coefficients %&gt;% as.data.frame())
+```
+
+```
+##                Estimate Std. Error    z value      Pr(&gt;|z|)
+## (Intercept) -6.26013687 0.26362374 -23.746484 1.194596e-124
+## attr         0.76579561 0.02989993  25.611951 1.122860e-144
+## intel       -0.06826831 0.03019698  -2.260767  2.377371e-02
+## prob         0.32775920 0.02114556  15.500141  3.461290e-54
+```
+
+Recalling the meaning of `(P &gt; |z|)` - the p-value - we can determine that all three rating play a significant role in the decision outcome of a date where the individual is male.
+
+---
+
+class: left, middle, r-logo
+
+## Interpreting the coefficients  
+
+Our coefficients indicate the linear impact on the log odds of a positive decision.  This means that a negative coefficient decreases the log odds and a positive coefficient increases the log odds.  In this context we can see that physical attractiveness and sense of reciprocation both have a positive effect on likelihood of a positive decision when the individual is male, but intelligence has a negative impact&lt;sup&gt;1&lt;/sup&gt;.  
+
+We can easily extend the manipulations from a few slides back to get a formula for the odds of an event in terms of the coefficents `\(\beta_0, \beta_1, ..., \beta_p\)`:
+
+$$
+`\begin{align*}
+\frac{P(y = 1)}{P(y = 0)} &amp;= e^{\beta_0 + \beta_1x_1 + ... + \beta_px_p} \\
+&amp;= e^{\beta_0}(e^{\beta_1})^{x_1}...(e^{\beta_p})^{x_p}
+\end{align*}`
+$$
+
+* `\(e^{\beta_0}\)` is the odds of the event assuming zero from all input variables (the odds of someone perceived as very ugly, very dumb and very disengaged being viewed positively)
+* `\(e^{\beta_i}\)` is the multiplier of the odds associated with a one unit increase in `\(x_i\)` (for example, an extra point rating in physical attractiveness), assuming all else equal - because of the mutiplicative effect, we call this the *odds ratio*
+
+
+&lt;font size=1&gt;[1] I'd like to say I am surprised, but I'm not. &lt;/font&gt;
+---
+
+class: left, middle, r-logo
+
+## Calculating and interpreting the odds ratios 
+
+Odds ratios are simply the exponent of the coefficient estimates.
+
+
+```r
+# add a column to our coefficients with odds ratios
+coefficients_m$odds_ratio &lt;- exp(coefficients_m[ ,"Estimate"])
+coefficients_m
+```
+
+```
+##                Estimate Std. Error    z value      Pr(&gt;|z|)  odds_ratio
+## (Intercept) -6.26013687 0.26362374 -23.746484 1.194596e-124 0.001910984
+## attr         0.76579561 0.02989993  25.611951 1.122860e-144 2.150704824
+## intel       -0.06826831 0.03019698  -2.260767  2.377371e-02 0.934009832
+## prob         0.32775920 0.02114556  15.500141  3.461290e-54 1.387854732
+```
+
+We interpret our each of our odds ratios as follows (assuming all else equal):
+
+* An extra point in physical attractiveness increases the odds by 115%
+* An extra point in intelligence *decreases* the odds by 7%
+* An extra point in perceived reciprocation of interest increases the odds by 32%
+
+
+If you are concerned about the precision of these statements, you can also get the 95% confidence intervals for the odds ratios by using `exp(confint(model_m))`
+
+
+
+---
+
+class: left, middle, r-logo
+
+## Warning:  odds &amp;#x2260; probabability
+
+Increase in odds have a diminishing effect on probability as the original probability increases.  So it is important to know the difference between the two.  Here is a graph showing the impact of a 10% increase in odds on the probability of an event, depending on the original probability.
+
+&lt;img src="index_files/figure-html/unnamed-chunk-7-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+class: left, middle, r-logo
+
+## Are dynamics different with women?
+
+
+```r
+# run a binomial general linear model on the females
+model_f &lt;- glm(dec ~ attr + intel + prob, data = speed_dating[speed_dating$gender == 0, ],
+             family = "binomial")
+
+# view a summary of the coefficients of the model, incl odds_ratios
+coefficients_f &lt;- summary(model_f)$coefficients %&gt;% as.data.frame()
+coefficients_f$odds_ratio &lt;- exp(coefficients_f[ ,"Estimate"])
+coefficients_f
+```
+
+```
+##                Estimate Std. Error    z value      Pr(&gt;|z|)  odds_ratio
+## (Intercept) -5.84620660 0.25253399 -23.150177 1.447797e-118 0.002890845
+## attr         0.55171639 0.02507124  22.005951 2.525658e-107 1.736230506
+## intel        0.08755352 0.02880294   3.039743  2.367804e-03 1.091500684
+## prob         0.23108983 0.01979040  11.676862  1.673600e-31 1.259972420
+```
+
+Again, we see that all three ratings are significant, but we see different dynamics:
+
+* An extra point in physical attractiveness increases odds by 74%
+* An extra point in intelligence increases odds by 9%
+* an extra point in perceived reciprocation of interest increases odds by 26%
+
+We see attractiveness and intelligence both playing a positive role, and a lower effect of physical attractiveness when the decision maker is female.
+
+---
+
+class: left, middle, r-logo
+
+## Predicting using binomial logistic regression models
+
+Binomial logistic regression models play an important role in predictive analytics.  New data fed into the fitted logistic function can predict the probability of a positive outcome.
+
+
+```r
+new_dates &lt;- data.frame(
+  attr = c(1, 5, 9),
+  intel = c(2, 4, 8),
+  prob = c(5, 7, 9)
+)
+
+predict(model_m, new_dates, type = "response")
+```
+
+```
+##         1         2         3 
+## 0.0181266 0.3989319 0.9541616
+```
+
+In classification learning, the data is split into a training and test set, the model is fitted using a training set, a probability 'cutoff' is used to determine positive or negative classes (usually 0.5), and then the predictive accuracy is determined by testing on the test set.
+
+---
+
+class: left, middle, r-logo
+
+## Assessing the fit of a binomial logistic regression model
+
+Previously we looked at the fit of a linear regression model and determined a metric called `\(R^2\)`, which determined how much of the variance of `\(y\)` was explained by our model.  This is not so straightforward in binomial logistic regression, and in fcat still the subject of research.  
+
+Numerous variants of measures called *pseudo-$R^2$* exist to try to approximate something similar to an `\(R^2\)`.  The `DescTools` package provides easy access to these measures.  All have positive and negatives and should be handled carefully. Here are four of them.
+
+
+```r
+library(DescTools)
+DescTools::PseudoR2(model_m, which = c("McFadden", "CoxSnell", "Nagelkerke", "Tjur"))
+```
+
+```
+##   McFadden   CoxSnell Nagelkerke       Tjur 
+##  0.2742302  0.3161303  0.4215972  0.3341089
+```
+
+The *Aikake Information Criterion*  is also valuable in directly comparing two competing models, with a lower AIC suggestion less information loss from the model.
+
+
+```r
+AIC(model_m)
+```
+
+```
+## [1] 4019.599
+```
+
+---
+
+class: left, middle, r-logo
+
+## Assessing model confidence/goodness-of-fit
+
+In linear regression we were able to compare our model to a completely random alternative and show with some level of certainty whether our model did a 'better than random' job.  This, again, is not straightforward with logistic regression.  Options includeL
+
+* 'Goodness of fit' tests for inference involving breaking predictions into groups and comparing the observed prediction in each group with the modeled predictions in each group, and performing a chi-square test to determine if they are significantly different.  In these tests the null hypothesis is that there is a good fit, therefore (unlike linear regression) a low p-value is a sign of a poorly chosen model.  There are a number of different goodness of fit tests available in the `LogisticDx` package, including the Hosmer-Lemeshow test.
+* Typical measures of predictive accuracy can be used if the model is being trained in a predictive context to classify test data, such as precision, recall and ROC-AUC.
+
+---
+
+class: left, middle, r-logo
+
+## 'Take-home' exercise
+
+Here is the coding for `goal` in the `speed_dating` dataset:
+
+* Seemed like a fun night out = 1
+* To meet new people = 2
+* To get a date = 3
+* Looking for a serious relationship = 4
+* To say I did it = 5
+* Other = 6
+
+Filter the data into separate sets according to `goal` - or combine sets if you think the goals are similar.  For each of your set, run a binomial logistic regression model and determine if there are any notable differences between the groups.  Feel free to share your findings!
+
+---
+class: center, middle, r-logo
+
+# Thank you! Questions?
+
+## Next time: Multinomial Logistic Regression for outcomes that are categorical and without order
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

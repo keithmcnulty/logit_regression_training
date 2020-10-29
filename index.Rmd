@@ -352,7 +352,7 @@ DescTools::PseudoR2(model_m,
                     which = c("McFadden", "CoxSnell", "Nagelkerke", "Tjur"))
 ```
 
-The *Aikake Information Criterion*  is also valuable in directly comparing two competing models, with a lower AIC suggestion less information loss from the model.
+The *Akaike Information Criterion*  is also valuable in directly comparing two competing models, with a lower AIC suggestion less information loss from the model.
 
 ```{r}
 AIC(model_m)

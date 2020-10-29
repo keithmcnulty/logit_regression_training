@@ -268,7 +268,7 @@ coefficients_m$odds_ratio <- exp(coefficients_m[ ,"Estimate"])
 coefficients_m
 ```
 
-We interpret our each of our odds ratios as follows (assuming all else equal):
+We interpret each of our odds ratios as follows (assuming all else equal):
 
 * An extra point in physical attractiveness increases the odds by 115%
 * An extra point in intelligence *decreases* the odds by 7%

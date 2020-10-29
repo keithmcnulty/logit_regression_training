@@ -38,6 +38,8 @@ class: left, middle, r-logo
 
 ## Recap from last session
 
+Document from previous learning session on Linear Regression is [here](https://keithmcnulty.github.io/linear_regression_training/#1).
+
 When we model, we are trying to understand a relationship between an outcome variable $y$ and a set of input variables $X = x_1, x_2, ..., x_p$ of the form 
 
 $$y = f(X) + \epsilon$$

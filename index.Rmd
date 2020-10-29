@@ -180,7 +180,7 @@ $$
 $$
 So we have a linear model in the *log odds* of $y$.
 
-Since a *transformation* of our outcome is linear on our input variable, we can create a model known as a *generalized linear model* which will model the log odds of our outcome event $y$.  As we will see, the coefficients of a model like this can be interpreted very intuitively to explain the impact of input variables on the likelihood of $y$ occurring.
+Since a *transformation* of our outcome is linear on our input variable, we can create a model known as a *generalized linear model*.  As we will see, the coefficients of a model like this can be interpreted very intuitively to explain the impact of input variables on the likelihood of $y$ occurring.
 
 ---
 
@@ -223,7 +223,7 @@ class: left, middle, r-logo
 ## Running the model on men only
 
 ```{r}
-# run a binomial general linear model on the male individuals
+# run a binomial general linear model on the male decision makers
 model_m <- glm(dec ~ attr + intel + prob, 
                data = speed_dating[speed_dating$gender == 1, ],
                family = "binomial")
@@ -252,7 +252,7 @@ $$
 $$
 
 * $e^{\beta_0}$ is the odds of the event assuming zero from all input variables 
-* $e^{\beta_i}$ is the multiplier of the odds associated with a one unit increase in $x_i$ (for example, an extra point rating in physical attractiveness), assuming all else equal - because of the multiplicative effect, we call this the *odds ratio*
+* $e^{\beta_i}$ is the multiplier of the odds associated with a one unit increase in $x_i$ (for example, an extra point rating in physical attractiveness), assuming all else equal - because of the multiplicative effect, we call this the *odds ratio* for $x_i$
 
 ---
 
@@ -303,7 +303,7 @@ class: left, middle, r-logo
 ## Are dynamics different with women?
 
 ```{r}
-# run a binomial general linear model on the females
+# run a binomial general linear model on the female decision makers
 model_f <- glm(dec ~ attr + intel + prob, 
                data = speed_dating[speed_dating$gender == 0, ],
                family = "binomial")
@@ -342,7 +342,7 @@ class: left, middle, r-logo
 
 ## Assessing the fit of a binomial logistic regression model
 
-Previously we looked at the fit of a linear regression model and determined a metric called $R^2$, which determined how much of the variance of $y$ was explained by our model.  This is not so straightforward in binomial logistic regression, and in fact still the subject of intense research.  
+Previously we looked at the fit of a linear regression model and determined a metric called $R^2$, which determined how much of the variance of $y$ was explained by our model.  This is not so straightforward in binomial logistic regression, and is in fact still the subject of intense research.  
 
 Numerous variants of measures called *pseudo*- $R^2$ exist to try to approximate something similar to an $R^2$.  The `DescTools` package provides easy access to these measures.  All have different definitions and should be handled carefully. Here are four of them.
 
@@ -378,7 +378,7 @@ class: left, middle, r-logo
 1.  Download the `orings` dataset from [here](https://raw.githubusercontent.com/keithmcnulty/logit_regression_training/main/orings.csv).  
 2.  The dataset shows the air temperature at launch and the number of incidents of o-ring damage on each shuttle launch prior to the Challenger launch.
 3.  Create an appropriate binary variable to apply binomial logistic regression.
-4.  Prove that air temperature at launch had a significant effect on the probability of o-ring damage.
+4.  Show that air temperature at launch had a significant effect on the probability of o-ring damage.
 
 ---
 
